@@ -10,8 +10,12 @@ import minitorch
 class Network(minitorch.Module):
     def __init__(self, hidden_layers):
         super().__init__()
-        # TODO: Implement for Task 1.5.
-        raise NotImplementedError("Need to implement for Task 1.5")
+        INPUT_SIZE = 2
+        OUTPUT_SIZE = 1
+        
+        self.layer1 = Linear(INPUT_SIZE, hidden_layers)
+        self.layer2 = Linear(hidden_layers, hidden_layers)
+        self.layer3 = Linear(hidden_layers, OUTPUT_SIZE)
 
     def forward(self, x):
         middle = [h.relu() for h in self.layer1.forward(x)]
@@ -40,8 +44,13 @@ class Linear(minitorch.Module):
             )
 
     def forward(self, inputs):
-        # TODO: Implement for Task 1.5.
-        raise NotImplementedError("Need to implement for Task 1.5")
+        outputs = [b.data for b in self.bias]
+
+        for i, inputRow in enumerate(self.weights):
+            for j, weight in enumerate(inputRow):
+                outputs[j] += inputs[i].data * weight.data
+
+        return [minitorch.Scalar(output) for output in outputs]
 
 
 def default_log_fn(epoch, total_loss, correct, losses):

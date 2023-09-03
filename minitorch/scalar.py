@@ -9,6 +9,7 @@ from .autodiff import Context, Variable, backpropagate, central_difference
 from .scalar_functions import (
     EQ,
     LT,
+    GT,
     Add,
     Exp,
     Inv,
@@ -92,31 +93,26 @@ class Scalar:
         return Mul.apply(b, Inv.apply(self))
 
     def __add__(self, b: ScalarLike) -> Scalar:
-        # TODO: Implement for Task 1.2.
-        raise NotImplementedError("Need to implement for Task 1.2")
+        return Add.apply(self, b)
 
     def __bool__(self) -> bool:
         return bool(self.data)
 
     def __lt__(self, b: ScalarLike) -> Scalar:
-        # TODO: Implement for Task 1.2.
-        raise NotImplementedError("Need to implement for Task 1.2")
+        return LT.apply(self, b)
 
     def __gt__(self, b: ScalarLike) -> Scalar:
-        # TODO: Implement for Task 1.2.
-        raise NotImplementedError("Need to implement for Task 1.2")
+        return GT.apply(self, b)
 
     def __eq__(self, b: ScalarLike) -> Scalar:  # type: ignore[override]
-        # TODO: Implement for Task 1.2.
-        raise NotImplementedError("Need to implement for Task 1.2")
+        return EQ.apply(self, b)
 
     def __sub__(self, b: ScalarLike) -> Scalar:
-        # TODO: Implement for Task 1.2.
-        raise NotImplementedError("Need to implement for Task 1.2")
+        negB = Neg.apply(b)
+        return Add.apply(self, negB)
 
     def __neg__(self) -> Scalar:
-        # TODO: Implement for Task 1.2.
-        raise NotImplementedError("Need to implement for Task 1.2")
+        return Neg.apply(self)
 
     def __radd__(self, b: ScalarLike) -> Scalar:
         return self + b
@@ -125,20 +121,16 @@ class Scalar:
         return self * b
 
     def log(self) -> Scalar:
-        # TODO: Implement for Task 1.2.
-        raise NotImplementedError("Need to implement for Task 1.2")
+        return Log.apply(self)
 
     def exp(self) -> Scalar:
-        # TODO: Implement for Task 1.2.
-        raise NotImplementedError("Need to implement for Task 1.2")
+        return Exp.apply(self)
 
     def sigmoid(self) -> Scalar:
-        # TODO: Implement for Task 1.2.
-        raise NotImplementedError("Need to implement for Task 1.2")
+        return Sigmoid.apply(self)
 
     def relu(self) -> Scalar:
-        # TODO: Implement for Task 1.2.
-        raise NotImplementedError("Need to implement for Task 1.2")
+        return ReLU.apply(self)
 
     # Variable elements for backprop
 
@@ -153,7 +145,7 @@ class Scalar:
         assert self.is_leaf(), "Only leaf variables can have derivatives."
         if self.derivative is None:
             self.derivative = 0.0
-        self.derivative += x
+        self.derivative += float(x)
 
     def is_leaf(self) -> bool:
         "True if this variable created by the user (no `last_fn`)"
@@ -173,8 +165,15 @@ class Scalar:
         assert h.last_fn is not None
         assert h.ctx is not None
 
-        # TODO: Implement for Task 1.3.
-        raise NotImplementedError("Need to implement for Task 1.3")
+        localDerivatives = h.last_fn.backward(h.ctx, d_output)
+
+        if not isinstance(localDerivatives, tuple):
+            localDerivatives = (localDerivatives,)
+        
+        derivativesWithVariables = zip(h.inputs, localDerivatives)
+
+        return [(var, deriv) for var, deriv in derivativesWithVariables if not var.is_constant()]
+
 
     def backward(self, d_output: Optional[float] = None) -> None:
         """

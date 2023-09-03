@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Optional, Sequence, Tuple
+from typing import Any, Dict, Optional, Sequence, Tuple, List
 
 
 class Module:
@@ -25,31 +25,70 @@ class Module:
         self.training = True
 
     def modules(self) -> Sequence[Module]:
-        "Return the direct child modules of this module."
+        """
+        Return the child modules of this module.
+        
+        This fetches and returns only the immediate child modules 
+        associated with the current module, without diving deeper into any nested submodules.
+        """
         m: Dict[str, Module] = self.__dict__["_modules"]
         return list(m.values())
 
     def train(self) -> None:
-        "Set the mode of this module and all descendent modules to `train`."
-        raise NotImplementedError("Need to include this file from past assignment.")
+        """
+        Set the mode of this module and all descendent modules to `train`.
+        
+        This ensures that the module, along with 
+        all of its descendants, is set to training mode.
+        """
+        self.training = True
+        for m in self.modules():
+            m.training = True
 
     def eval(self) -> None:
-        "Set the mode of this module and all descendent modules to `eval`."
-        raise NotImplementedError("Need to include this file from past assignment.")
+        """
+        Set the mode of this module and all descendent modules to `eval`.
+        
+        This ensures that the module, 
+        along with all of its descendants, is set to evaluation mode.
+        """
+        self.training = False
+        for m in self.modules():
+            m.training = False
 
     def named_parameters(self) -> Sequence[Tuple[str, Parameter]]:
         """
         Collect all the parameters of this module and its descendents.
 
-
         Returns:
             The name and `Parameter` of each ancestor parameter.
         """
-        raise NotImplementedError("Need to include this file from past assignment.")
+        namedParameters = []
+        for name, parameter in self._parameters.items():
+            namedParameters.append((name, parameter))
+
+        for name, module in self._modules.items():
+            moduleNamedParameters = module.named_parameters()
+            for subName, subParameter in moduleNamedParameters:
+                fullName = name + '.' + subName
+                namedParameters.append((fullName, subParameter))
+
+        return namedParameters
 
     def parameters(self) -> Sequence[Parameter]:
-        "Enumerate over all the parameters of this module and its descendents."
-        raise NotImplementedError("Need to include this file from past assignment.")
+        """
+        Enumerate over all the parameters of this module and its descendents.
+        
+        This collects parameters from the current module and all its 
+        descendant modules. It returns a consolidated list of these parameters.
+        """
+        allParameters: List[Parameter] = []
+
+        allParameters.extend(self._parameters.values())
+
+        for module in self._modules.values():
+            allParameters.extend(module.parameters())
+        return allParameters
 
     def add_parameter(self, k: str, v: Any) -> Parameter:
         """
@@ -115,9 +154,9 @@ class Module:
 
 class Parameter:
     """
-    A Parameter is a special container stored in a `Module`.
+    A Parameter is a special container stored in a :class:`Module`.
 
-    It is designed to hold a `Variable`, but we allow it to hold
+    It is designed to hold a :class:`Variable`, but we allow it to hold
     any value for testing.
     """
 
